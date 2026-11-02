@@ -4,7 +4,7 @@
 
 ## 演示视频
 
-<video src="demo%20%E6%BC%94%E7%A4%BA.mp4" controls width="100%"></video>
+[▶ 点击观看演示视频](demo%20%E6%BC%94%E7%A4%BA.mp4)
 
 ## 核心能力
 
