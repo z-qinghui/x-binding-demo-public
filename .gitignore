@@ -1,0 +1,11 @@
+# 依赖
+node_modules/
+
+# 敏感凭证 —— 切勿提交
+.env
+.data/
+
+# 日志与截图
+*.log
+*.png
+.playwright-mcp/

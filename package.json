@@ -1,0 +1,18 @@
+{
+  "name": "x-binding-demo",
+  "version": "1.0.0",
+  "description": "X (Twitter) 智能客服账号绑定授权 Demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@xdevplatform/chat-xdk": "^0.4.3",
+    "@xdevplatform/xdk": "^0.6.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "juicebox-sdk": "^0.3.7"
+  }
+}

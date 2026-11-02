@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X（Twitter）智能客服集成方案 Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="currentColor"/>
+          </svg>
+          <span>X 智能客服集成 Demo</span>
+        </div>
+        <nav class="nav">
+          <button class="nav-btn active" data-page="binding">1️⃣ 账号绑定</button>
+          <button class="nav-btn" data-page="messages">💬 私信收发</button>
+          <button class="nav-btn" data-page="replies">💭 评论回复</button>
+        </nav>
+      </div>
+    </header>
+    <main class="main">
+      <!-- 页面 1: 账号绑定 -->
+      <div id="page-binding" class="page active">
+        <div class="page-header">
+          <h1>账号绑定 & OAuth 授权</h1>
+          <p>通过 OAuth 2.0 Authorization Code Flow with PKCE 安全绑定企业 X 账号，座席无需保存密码</p>
+        </div>
+        <div class="content-grid">
+          <section class="card">
+            <h3>📋 功能概述</h3>
+            <p>企业用户授权其 X 账号到平台，获取 Access Token + Refresh Token，支持后台静默续期。</p>
+            <ul>
+              <li>OAuth 2.0 PKCE（3-legged 用户上下文）</li>
+              <li>Access Token 2 小时过期，Refresh Token 长期</li>
+              <li>offline.access 换取 Refresh Token 自动续期</li>
+              <li>支持多租户多账号绑定</li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>🔗 Demo 后端路由 → X 官方 API</h3>
+            <p class="section-desc">以下 <code>/api/x/*</code> 路由由 Demo 后端定义，内部调用 X 官方 OAuth 2.0 API。</p>
+            <div class="api-list">
+              <div class="api-item">
+                <span class="method get">GET</span><code>/api/x/auth</code>
+                <span class="desc">构建授权 URL 并重定向用户到 X 登录</span>
+              </div>
+              <div class="api-item api-detail">
+                <span class="arrow">↓</span>
+                <span class="desc">内部调用 X 官方：<code>GET https://x.com/i/oauth2/authorize</code></span>
+                <a class="doc-link" href="https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code" target="_blank" title="官方文档：Authorize URL">📖</a>
+              </div>
+
+              <div class="api-item">
+                <span class="method get">GET</span><code>/api/x/callback</code>
+                <span class="desc">接收 X 回调，用 authorization code 换取 token</span>
+              </div>
+              <div class="api-item api-detail">
+                <span class="arrow">↓</span>
+                <span class="desc">内部调用 X 官方：<code>POST https://api.x.com/2/oauth2/token</code>（grant_type=authorization_code）</span>
+                <a class="doc-link" href="https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token#steps-to-connect-using-oauth-2-0" target="_blank" title="官方文档：POST oauth2/token">📖</a>
+              </div>
+
+              <div class="api-item">
+                <span class="method get">GET</span><code>/api/x/status</code>
+                <span class="desc">查询本地绑定状态（纯本地，不调用 X API）</span>
+              </div>
+
+              <div class="api-item">
+                <span class="method post">POST</span><code>/api/x/refresh</code>
+                <span class="desc">用 refresh_token 获取新的 access_token</span>
+              </div>
+              <div class="api-item api-detail">
+                <span class="arrow">↓</span>
+                <span class="desc">内部调用 X 官方：<code>POST https://api.x.com/2/oauth2/token</code>（grant_type=refresh_token）</span>
+                <a class="doc-link" href="https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code#refresh-tokens" target="_blank" title="官方文档：Refresh Tokens">📖</a>
+              </div>
+
+              <div class="api-item">
+                <span class="method post">POST</span><code>/api/x/unbind</code>
+                <span class="desc">撤销 token 并清除本地绑定</span>
+              </div>
+              <div class="api-item api-detail">
+                <span class="arrow">↓</span>
+                <span class="desc">内部调用 X 官方：<code>POST https://api.x.com/2/oauth2/revoke</code></span>
+                <a class="doc-link" href="https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token#steps-to-connect-using-oauth-2-0" target="_blank" title="官方文档：POST oauth2/revoke">📖</a>
+              </div>
+
+              <div class="api-item">
+                <span class="method post">POST</span><code>/api/x/unbind-all</code>
+                <span class="desc">一键解绑所有账号（演示用，便于多次绑定流程）</span>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <h3>📚 官方文档</h3>
+            <ul>
+              <li><a href="https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code" target="_blank">OAuth 2.0 Authorization Code + PKCE</a></li>
+              <li><a href="https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token" target="_blank">User Access Token</a></li>
+              <li><a href="https://docs.x.com/fundamentals/developer-apps" target="_blank">Developer Apps 管理</a></li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>⚙️ X 开发者后台配置</h3>
+            <ol>
+              <li>在 <a href="https://console.x.com" target="_blank">console.x.com</a> 创建 Project + App</li>
+              <li>App settings → User authentication settings 启用 OAuth 2.0</li>
+              <li>Type of App 选 <code>Web App</code>（confidential client）</li>
+              <li>App permissions 选 <code>Read and write and Direct messages</code></li>
+              <li>Callback URL：<code>http://localhost:3000/api/x/callback</code></li>
+              <li>获取 <code>Client ID</code> / <code>Client Secret</code> 填入 .env</li>
+            </ol>
+          </section>
+        </div>
+        <!-- 已绑定账号列表 -->
+        <div class="card" id="bindings-list-card" style="display:none">
+          <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+            <h2>📋 已绑定账号</h2>
+            <div style="display:flex;gap:10px">
+              <button id="btn-bind-another" class="btn btn-secondary">➕ 绑定更多账号</button>
+              <button id="btn-unbind-all" class="btn btn-danger">🗑️ 一键解绑所有</button>
+            </div>
+          </div>
+          <div id="bindings-list"></div>
+        </div>
+
+        <!-- 单账号绑定卡片（初始 / 绑定更多时显示） -->
+        <div class="card" id="binding-card">
+          <div class="card-header"><h2>🔐 绑定 X 账号</h2></div>
+          <div class="form-group">
+            <label><input type="checkbox" id="prereq-1"> 我已在 X Developer Console 创建应用</label>
+            <label><input type="checkbox" id="prereq-2"> 我已启用 OAuth 2.0 并配置回调 URL</label>
+            <label><input type="checkbox" id="prereq-3"> 我已配置必需的 Scopes 和 App permissions</label>
+          </div>
+          <button id="btn-bind" class="btn btn-primary" disabled>开始 OAuth 绑定</button>
+        </div>
+
+        <!-- 账号详情面板（点击某个已绑定账号时显示） -->
+        <div id="binding-status" class="card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+            <h3>绑定详情</h3>
+            <button id="btn-back-to-list" class="btn btn-secondary" style="display:none">← 返回列表</button>
+          </div>
+          <div id="status-content"></div>
+          <div style="margin-top:16px;display:flex;gap:10px">
+            <button id="btn-refresh" class="btn btn-secondary">刷新 Token</button>
+            <button id="btn-unbind" class="btn btn-danger">解绑此账号</button>
+          </div>
+        </div>
+      </div>
+      <!-- 页面 2: 私信收发 -->
+      <div id="page-messages" class="page">
+        <div class="page-header">
+          <h1>私信收发</h1>
+          <p>通过 X Activity API Webhook 实时接收私信，用 chat-xdk 在服务端解密新版 Chat 端到端加密私信</p>
+        </div>
+        <div class="content-grid">
+          <section class="card">
+            <h3>📋 功能概述</h3>
+            <p>入站走 XAA Webhook 实时推送，新版 Chat 加密私信用 chat-xdk 服务端解密展示明文。</p>
+            <ul>
+              <li>实时接收私信（XAA Webhook）</li>
+              <li>旧版 DM 事件：<code>dm.received</code> / <code>dm.sent</code>（明文）</li>
+              <li>新版 Chat 事件：<code>chat.received</code> / <code>chat.sent</code>（E2EE 加密）</li>
+              <li>Juicebox PIN 解锁真机身份，服务端解密加密私信</li>
+              <li>解密明文自动展示，无需手动操作</li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>🔐 X Chat 端到端加密 + chat-xdk 服务端解密</h3>
+            <p>X 新版 Chat 采用端到端加密（E2EE）。<code>chat.received</code> 的 Webhook 推送含元数据与密文 <code>encoded_event</code>（及可选 <code>conversation_key_change_event</code>），<strong>可用 X 官方 <code>@xdevplatform/chat-xdk</code> 在服务端解密为明文</strong>。</p>
+            <p>本 Demo 走 <strong>Juicebox PIN（真机身份）</strong> 路径：用账号的 4 位 XChat PIN 从 Juicebox 恢复真机身份密钥（<code>createChat → unlock</code>），即可解密该账号在网页/App 真实收发的加密私信。解密要点：登记会话双方全部签名公钥版本 + 先吸收 key change 提取会话密钥。</p>
+            <p style="color:#888;font-size:13px">⚠️ PIN 是账号 E2E 最高凭据，从服务端 <code>.env</code> 的 <code>XCHAT_PIN</code> 读取、仅在内存使用、不落盘。服务端持有 PIN 会削弱端到端保证，此为 Demo 演示取舍。</p>
+          </section>
+          <section class="card">
+            <h3>🔗 后端接口</h3>
+            <div class="api-list">
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/webhook/register</code><span class="desc">注册 Webhook URL</span></div>
+              <div class="api-item"><span class="method put">PUT</span><code>/api/x/webhook/:id/validate</code><span class="desc">重新验证失效 Webhook</span></div>
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/webhook/subscribe</code><span class="desc">订阅 dm/chat 事件</span></div>
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/dm/send</code><span class="desc">发送私信（旧版 DM）</span></div>
+              <div class="api-item"><span class="method get">GET</span><code>/api/x/dm/local-events</code><span class="desc">本地缓存事件（含解密后的 Chat 明文）</span></div>
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/chat/unlock</code><span class="desc">Juicebox PIN 解锁真机身份</span></div>
+              <div class="api-item"><span class="method get">GET</span><code>/api/x/chat/identity-status</code><span class="desc">查询解锁状态</span></div>
+              <div class="api-item"><span class="method get">GET</span><code>/api/x/chat/local-events</code><span class="desc">已解密的 Chat 事件</span></div>
+            </div>
+            <p style="color:#666;font-size:12px;margin-top:8px">加密私信解密核心：webhook 收到 <code>chat.received</code> → 用已解锁真机身份 <code>decryptEvents([keyChange, msg])</code> 提取会话密钥并解密 → 明文写入本地缓存供前端轮询展示。</p>
+          </section>
+          <section class="card">
+            <h3>📚 官方文档</h3>
+            <ul>
+              <li><a href="https://docs.x.com/xchat/xchat-xdk" target="_blank">XChat XDK（加密工具包）</a></li>
+              <li><a href="https://docs.x.com/xchat/real-time-events" target="_blank">XChat 实时事件（webhook 结构）</a></li>
+              <li><a href="https://github.com/xdevplatform/chat-xdk" target="_blank">chat-xdk 源码与示例（GitHub）</a></li>
+              <li><a href="https://docs.x.com/x-api/activity/introduction" target="_blank">X Activity API 介绍</a></li>
+              <li><a href="https://docs.x.com/x-api/webhooks/introduction" target="_blank">V2 Webhooks API</a></li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>⚙️ 配置步骤</h3>
+            <ol>
+              <li>完成页面 1 账号绑定</li>
+              <li>准备公网 HTTPS 回调（本地用 ngrok，无端口号）</li>
+              <li>点击「注册 Webhook」→ X 发起 CRC 校验</li>
+              <li>点击「订阅 Chat 事件」（收加密私信）</li>
+              <li>服务端 <code>.env</code> 配置 <code>XCHAT_PIN</code>（账号 XChat PIN），进页面自动解锁真机身份</li>
+              <li>对方发来的加密私信经 Webhook 实时解密，自动展示明文</li>
+            </ol>
+          </section>
+          <section class="card warning">
+            <h3>💰 成本 & 限制</h3>
+            <p>DM 事件按量计费约 $0.010/条；DM 仅保留最近 30 天，须自建持久化层。</p>
+            <p>订阅上限：Self-serve 1,500 → Enterprise 75,000。</p>
+          </section>
+        </div>
+        <div class="card" id="messages-card">
+          <h2>💬 私信工作台</h2>
+          <div class="form-group">
+            <button class="btn btn-secondary" id="btn-webhook-register">注册 Webhook</button>
+            <button class="btn btn-secondary" id="btn-dm-subscribe">订阅 DM 事件</button>
+            <button class="btn btn-secondary" id="btn-chat-subscribe">订阅 Chat 事件</button>
+            <button class="btn btn-secondary" id="btn-dm-fetch">拉取消息历史</button>
+          </div>
+          <div id="messages-status" style="margin:10px 0;padding:10px;background:#1c1c1c;border-radius:8px;color:#888"></div>
+          <!-- 账号切换 Tab -->
+          <div id="dm-account-tabs" style="display:none;margin-bottom:12px"></div>
+          <!-- 聊天区域（每个账号独立） -->
+          <div id="dm-panels"></div>
+        </div>
+
+        <div class="card" id="chat-decrypt-card">
+          <h2>🔓 XChat 加密私信解密</h2>
+          <div id="chat-identity-status" style="margin:6px 0;color:#888"></div>
+          <div id="chat-pin-update" style="margin:6px 0;display:flex;align-items:center;gap:8px">
+            <input id="chat-pin-input" type="password" placeholder="输入新 PIN" maxlength="10" style="width:100px;padding:4px 8px;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#e5e5e5;font-size:13px" />
+            <button id="chat-pin-btn" style="padding:4px 12px;border-radius:6px;border:none;background:#1d9bf0;color:#fff;font-size:12px;cursor:pointer">更新 PIN</button>
+            <span id="chat-pin-msg" style="font-size:12px;color:#888"></span>
+          </div>
+          <div id="chat-decrypt-status" style="margin:10px 0;padding:10px;background:#1c1c1c;border-radius:8px;color:#888"></div>
+          <div id="chat-decrypt-list" style="border:1px solid #2a2a2a;border-radius:8px;padding:12px;background:#0f0f0f;min-height:80px;max-height:360px;overflow-y:auto"></div>
+        </div>
+      </div>
+      <!-- 页面 3: 评论回复 -->
+      <div id="page-replies" class="page">
+        <div class="page-header">
+          <h1>评论回复</h1>
+          <p>通过 X Activity API Webhook 实时监听 @提及/评论，通过发帖接口回复评论</p>
+        </div>
+        <div class="content-grid">
+          <section class="card">
+            <h3>📋 功能概述</h3>
+            <p>入站监听 post.mention.create 实时推送，出站发推文并指定 in_reply_to_tweet_id 完成回复。</p>
+            <ul>
+              <li>实时监听 @提及（XAA / post.mention.create）</li>
+              <li>回复评论（POST /2/tweets + reply.in_reply_to_tweet_id）</li>
+              <li>轮询兜底（GET /2/users/:id/mentions）</li>
+              <li>支持图片/视频附件</li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>🔗 后端接口</h3>
+            <div class="api-list">
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/webhook/register</code><span class="desc">注册 Webhook（同私信）</span></div>
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/activity/subscribe</code><span class="desc">订阅 post.mention.create</span></div>
+              <div class="api-item"><span class="method post">POST</span><code>/api/x/tweets/reply</code><span class="desc">发送评论回复</span></div>
+              <div class="api-item"><span class="method get">GET</span><code>/api/x/mentions</code><span class="desc">查询近期提及（轮询兜底）</span></div>
+              <div class="api-item"><span class="method get">GET</span><code>/api/x/mentions/local-events</code><span class="desc">本地缓存（Webhook 推送）</span></div>
+            </div>
+          </section>
+          <section class="card">
+            <h3>📚 官方文档</h3>
+            <ul>
+              <li><a href="https://docs.x.com/x-api/posts/manage-tweets/quickstart#reply-to-a-post" target="_blank">Reply to a Post</a></li>
+              <li><a href="https://docs.x.com/x-api/posts/timelines/quickstart/user-mention-quickstart" target="_blank">User Mentions Timeline</a></li>
+              <li><a href="https://docs.x.com/x-api/activity/introduction" target="_blank">XAA 事件类型</a></li>
+              <li><a href="https://docs.x.com/x-api/posts/filtered-stream/introduction" target="_blank">Filtered Stream（替代方案）</a></li>
+            </ul>
+          </section>
+          <section class="card">
+            <h3>⚙️ 配置步骤</h3>
+            <ol>
+              <li>完成账号绑定且 Webhook 已注册</li>
+              <li>点击「订阅提及事件」→ post.mention.create</li>
+              <li>他人 @提及时事件实时推送</li>
+              <li>点击某条提及右侧「回复」按钮</li>
+              <li>输入回复内容并发送</li>
+              <li>系统调用 POST /2/tweets 携带 in_reply_to_tweet_id</li>
+            </ol>
+          </section>
+          <section class="card warning">
+            <h3>⏱️ 速率限制</h3>
+            <p>POST /2/tweets 每用户 100 次/15 分钟（硬限），App 级 10,000 次/24 小时。</p>
+            <p>带 URL 的帖计费高达 $0.200/次，需评估短链/去链策略。</p>
+          </section>
+        </div>
+        <div class="card" id="replies-card">
+          <h2>💭 评论监听工作台</h2>
+          <div class="form-group">
+            <button class="btn btn-secondary" id="btn-mention-subscribe">订阅提及事件</button>
+            <button class="btn btn-secondary" id="btn-fetch-mentions">拉取最近提及</button>
+          </div>
+          <div id="mentions-status" style="margin:10px 0;padding:10px;background:#1c1c1c;border-radius:8px;color:#888"></div>
+          <div id="mentions-list" style="border:1px solid #2a2a2a;border-radius:8px;max-height:400px;overflow-y:auto">
+            <div style="padding:15px;text-align:center;color:#999">暂无数据</div>
+          </div>
+          <div id="reply-form" style="margin-top:20px;display:none;border-top:1px solid #2a2a2a;padding-top:15px">
+            <h3>回复评论</h3>
+            <div id="selected-mention" style="padding:10px;background:#1c1c1c;border-left:4px solid #1d9bf0;margin-bottom:15px"></div>
+            <div class="form-group">
+              <textarea id="reply-text" placeholder="输入评论回复内容..."></textarea>
+              <div style="margin-top:10px">
+                <button id="btn-send-reply" class="btn btn-primary">发送回复</button>
+                <button id="btn-cancel-reply" class="btn btn-secondary">取消</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <div id="toast" class="toast"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
