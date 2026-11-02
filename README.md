@@ -2,10 +2,6 @@
 
 基于 OAuth 2.0 PKCE 授权绑定企业 X 账号，通过 Webhook 实时接收私信和评论，支持新版 Chat 端到端加密私信的服务端解密（chat-xdk + Juicebox PIN）。
 
-## 演示视频
-
-[▶ 点击观看演示视频](demo%20%E6%BC%94%E7%A4%BA_chidimeru.mp4)
-
 ## 核心能力
 
 - **OAuth 2.0 PKCE 账号绑定** — 3-legged 用户授权，Access/Refresh Token 自动续期
